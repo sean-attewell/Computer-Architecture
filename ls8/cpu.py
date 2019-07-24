@@ -14,6 +14,7 @@ class CPU:
         self.running = False
         self.ram = [0] * 512
         self.pc = 0
+        self.sp = 7
 
 
     def ram_read(self, MAR):
@@ -52,7 +53,7 @@ class CPU:
                         continue # ignore blank lines
 
                     val = int(number, 2)
-                    print('val from file being read:', val)
+                    # print('val from file being read:', val)
                     # store it in memory
                     self.ram_write(val, address)
 
@@ -68,7 +69,7 @@ class CPU:
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
         #elif op == "SUB": etc
-        if op == "MUL":
+        elif op == "MUL":
             self.registers[reg_a] = self.registers[reg_a] * self.registers[reg_b]
         else:
             raise Exception("Unsupported ALU operation")
@@ -123,7 +124,18 @@ class CPU:
                 self.alu('MUL', address_a, address_b)
 
                 self.increment_pc(op_code)
-
+            elif op_code == 0b01000101: # PUSH
+                register_address = self.ram_read(self.pc + 1)
+                val = self.registers[register_address]
+                self.registers[self.sp] -= 1 # decrement the stack pointer
+                self.ram[self.registers[self.sp]] = val
+                self.increment_pc(op_code)
+            elif op_code == 0b01000110: # POP
+                register_address = self.ram_read(self.pc + 1)
+                val = self.ram[self.registers[self.sp]]
+                self.registers[register_address] = val
+                self.registers[self.sp] += 1
+                self.increment_pc(op_code)
             else:
                 print('here is the else')
 

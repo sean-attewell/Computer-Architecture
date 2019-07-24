@@ -1,0 +1,9 @@
+Stack:
+1
+4
+
+
+Registers:
+4
+1
+4
