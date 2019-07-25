@@ -67,7 +67,7 @@ class CPU:
         """ALU operations."""
 
         if op == "ADD":
-            self.reg[reg_a] += self.reg[reg_b]
+            self.registers[reg_a] += self.registers[reg_b]
         #elif op == "SUB": etc
         elif op == "MUL":
             self.registers[reg_a] = self.registers[reg_a] * self.registers[reg_b]
@@ -117,12 +117,15 @@ class CPU:
                 print(self.registers[address_a])
                 self.increment_pc(op_code)
                 pass
-
-            elif op_code == 0b10100010: # MUL R0,R1
+            elif op_code == 0b10100000: # ADD
+                address_a = self.ram_read(self.pc + 1)
+                address_b = self.ram_read(self.pc + 2)
+                self.alu('ADD', address_a, address_b)
+                self.increment_pc(op_code)
+            elif op_code == 0b10100010: # MUL 
                 address_a = self.ram_read(self.pc + 1)
                 address_b = self.ram_read(self.pc + 2)
                 self.alu('MUL', address_a, address_b)
-
                 self.increment_pc(op_code)
             elif op_code == 0b01000101: # PUSH
                 register_address = self.ram_read(self.pc + 1)
@@ -136,6 +139,15 @@ class CPU:
                 self.registers[register_address] = val
                 self.registers[self.sp] += 1
                 self.increment_pc(op_code)
+            elif op_code == 0b01010000: # CALL Calls a subroutine (function) at the address stored in the register.
+                self.registers[self.sp] -= 1 # stack pointer (stored in R7) goes down by one
+                self.ram[self.registers[self.sp]] = self.pc + 2 # at the stack pointer we're saving the return address
+                # The PC is set to the address stored in the given register 
+                address_of_subroutine = self.ram[self.pc + 1] # + 1 pc moves to next instruction (which is an address of the subroutine)
+                self.pc = self.registers[address_of_subroutine]
+            elif op_code == 0b00010001: # RET Pop the value from the top of the stack and store it in the pc.
+                self.pc = self.ram[self.registers[self.sp]] 
+                self.registers[self.sp] += 1 # because we have popped off the stack, need to move the sp up one
             else:
                 print('here is the else')
 
